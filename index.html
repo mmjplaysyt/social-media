@@ -17,7 +17,6 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--fg)
 h1,h2,h3{font-family:'Sora',sans-serif}
 body::before{content:'';position:fixed;top:-150px;right:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(232,160,53,.07) 0%,transparent 70%);pointer-events:none;z-index:0}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-
 .toast-box{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 .toast{padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;background:var(--card);border:1px solid var(--border);box-shadow:0 8px 28px rgba(0,0,0,.6);animation:tI .3s ease,tO .3s 2.7s forwards;max-width:340px;pointer-events:auto}
 .toast.ok{border-left:3px solid var(--grn)}.toast.er{border-left:3px solid var(--red)}.toast.in{border-left:3px solid var(--acc)}
@@ -32,7 +31,6 @@ body::before{content:'';position:fixed;top:-150px;right:-150px;width:500px;heigh
 .spinner{width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--acc);border-radius:50%;animation:sp .6s linear infinite;display:inline-block}@keyframes sp{to{transform:rotate(360deg)}}
 .empty-s{text-align:center;padding:40px 16px;color:var(--fg2)}.empty-s i{font-size:36px;margin-bottom:12px;display:block;opacity:.2}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}.modal-b{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:480px;width:100%;animation:mS .2s}@keyframes mS{from{transform:scale(.96) translateY(6px)}to{transform:scale(1) translateY(0)}}
-
 .app-grid{display:grid;grid-template-columns:220px 1fr;height:100vh}
 .nav-bar{border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;background:var(--bg2)}
 .ni{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all .12s;font-weight:500;color:var(--fg2);font-size:13px;white-space:nowrap}.ni:hover{background:var(--acc-s);color:var(--fg)}.ni.on{background:var(--acc-s);color:var(--acc)}
@@ -52,7 +50,6 @@ body::before{content:'';position:fixed;top:-150px;right:-150px;width:500px;heigh
 .msg-reactions{display:flex;gap:4px;margin-top:4px}.reaction-pill{padding:2px 6px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid transparent;background:var(--bg2);transition:all .1s}.reaction-pill:hover{border-color:var(--border)}.reaction-pill.active{border-color:var(--acc);background:var(--acc-s)}
 .msg-date-divider{text-align:center;font-size:11px;color:var(--fg2);padding:12px 0;position:relative}.msg-date-divider span{background:var(--bg);padding:0 12px;position:relative;z-index:1}.msg-date-divider::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border)}
 .pinned-bar{padding:8px 18px;background:rgba(232,160,53,.05);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--acc);flex-shrink:0;cursor:pointer}.pinned-bar:hover{background:rgba(232,160,53,.08)}
-
 .comp{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:18px}.comp textarea{width:100%;background:none;border:none;color:var(--fg);font-family:'Space Grotesk',sans-serif;font-size:14px;resize:none;outline:none;min-height:64px;line-height:1.6}.comp textarea::placeholder{color:#606078}
 .post{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;transition:border-color .15s;animation:pI .3s ease}.post:hover{border-color:#35354a}@keyframes pI{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .post-img{width:100%;border-radius:10px;margin-top:8px;max-height:380px;object-fit:cover;cursor:pointer}
@@ -90,51 +87,7 @@ body::before{content:'';position:fixed;top:-150px;right:-150px;width:500px;heigh
 <script>
 const SB_URL='https://mxwwwxhtwbfbrloykpef.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im14d3d3eGh0d2JmYnJsb3lrcGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxMzAxNjcsImV4cCI6MjA5MzcwNjE2N30.Xay-bf0i9QNpK3ENOa3Zjt1VzQTTpuKfCGzhm-LEyZc';
-let sb=null,me=null,myProf=null,myStatus='online',view='feed',viewingUid=null,chatView=null,dmOpen=true,unreadDMs=0,unreadGroups=0,imgFile=null,vidFile=null,inCall=false;
-
-// MEGA SQL SCHEMA
-const SQL=`CREATE TABLE IF NOT EXISTS profiles(id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY, username TEXT UNIQUE NOT NULL, full_name TEXT DEFAULT '', avatar_url TEXT DEFAULT '', bio TEXT DEFAULT '', status TEXT DEFAULT 'offline', created_at TIMESTAMPTZ DEFAULT now());
-CREATE TABLE IF NOT EXISTS posts(id UUID DEFAULT gen_random_uuid() PRIMARY KEY, user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL, content TEXT NOT NULL, image_url TEXT DEFAULT '', video_url TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT now());
-CREATE TABLE IF NOT EXISTS polls(id UUID DEFAULT gen_random_uuid() PRIMARY KEY, post_id UUID REFERENCES posts(id) ON DELETE CASCADE NOT NULL, question TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT now());
-CREATE TABLE IF NOT EXISTS poll_options(id UUID DEFAULT gen_random_uuid() PRIMARY KEY, poll_id UUID REFERENCES polls(id) ON DELETE CASCADE NOT NULL, text TEXT NOT NULL, votes INT DEFAULT 0);
-CREATE TABLE IF NOT EXISTS poll_votes(user_id UUID REFERENCES profiles(id) ON DELETE CASCADE, option_id UUID REFERENCES poll_options(id) ON DELETE CASCADE, PRIMARY KEY(user_id, option_id));
-CREATE TABLE IF NOT EXISTS bookmarks(user_id UUID REFERENCES profiles(id) ON DELETE CASCADE, post_id UUID REFERENCES posts(id) ON DELETE CASCADE, PRIMARY KEY(user_id, post_id));
-CREATE TABLE IF NOT EXISTS likes(user_id UUID REFERENCES profiles(id) ON DELETE CASCADE, post_id UUID REFERENCES posts(id) ON DELETE CASCADE, PRIMARY KEY(user_id, post_id));
-CREATE TABLE IF NOT EXISTS comments(id UUID DEFAULT gen_random_uuid() PRIMARY KEY, user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL, post_id UUID REFERENCES posts(id) ON DELETE CASCADE NOT NULL, content TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT now());
-CREATE TABLE IF NOT EXISTS follows(follower_id UUID REFERENCES profiles(id) ON DELETE CASCADE, following_id UUID REFERENCES profiles(id) ON DELETE CASCADE, PRIMARY KEY(follower_id, following_id));
-CREATE TABLE IF NOT EXISTS conversations(id UUID DEFAULT gen_random_uuid() PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT now());
-CREATE TABLE IF NOT EXISTS conversation_participants(conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE, user_id UUID REFERENCES profiles(id) ON DELETE CASCADE, PRIMARY KEY(conversation_id, user_id));
-CREATE TABLE IF NOT EXISTS messages(id UUID DEFAULT gen_random_uuid() PRIMARY KEY, conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE NOT NULL, sender_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL, content TEXT NOT NULL, is_pinned BOOLEAN DEFAULT false, created_at TIMESTAMPTZ DEFAULT now());
-CREATE TABLE IF NOT EXISTS message_reactions(message_id UUID REFERENCES messages(id) ON DELETE CASCADE, user_id UUID REFERENCES profiles(id) ON DELETE CASCADE, emoji TEXT NOT NULL, PRIMARY KEY(message_id, user_id, emoji));
-CREATE TABLE IF NOT EXISTS groups(id UUID DEFAULT gen_random_uuid() PRIMARY KEY, name TEXT NOT NULL, description TEXT DEFAULT '', created_by UUID REFERENCES profiles(id) ON DELETE CASCADE, created_at TIMESTAMPTZ DEFAULT now());
-CREATE TABLE IF NOT EXISTS group_members(group_id UUID REFERENCES groups(id) ON DELETE CASCADE, user_id UUID REFERENCES profiles(id) ON DELETE CASCADE, role TEXT DEFAULT 'member', PRIMARY KEY(group_id, user_id));
-DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN CREATE TYPE user_status AS ENUM ('online', 'idle', 'dnd', 'invisible'); END IF; END $$;
-ALTER TABLE profiles ALTER COLUMN status TYPE user_status USING status::user_status;
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY; ALTER TABLE posts ENABLE ROW LEVEL SECURITY; ALTER TABLE likes ENABLE ROW LEVEL SECURITY; ALTER TABLE comments ENABLE ROW LEVEL SECURITY; ALTER TABLE follows ENABLE ROW LEVEL SECURITY; ALTER TABLE conversations ENABLE ROW LEVEL SECURITY; ALTER TABLE conversation_participants ENABLE ROW LEVEL SECURITY; ALTER TABLE messages ENABLE ROW LEVEL SECURITY; ALTER TABLE groups ENABLE ROW LEVEL SECURITY; ALTER TABLE group_members ENABLE ROW LEVEL SECURITY; ALTER TABLE polls ENABLE ROW LEVEL SECURITY; ALTER TABLE poll_options ENABLE ROW LEVEL SECURITY; ALTER TABLE poll_votes ENABLE ROW LEVEL SECURITY; ALTER TABLE bookmarks ENABLE ROW LEVEL SECURITY; ALTER TABLE message_reactions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "ps" ON profiles FOR SELECT USING(true); CREATE POLICY "pi" ON profiles FOR INSERT WITH CHECK(auth.uid()=id); CREATE POLICY "pu" ON profiles FOR UPDATE USING(auth.uid()=id);
-CREATE POLICY "pos" ON posts FOR SELECT USING(true); CREATE POLICY "poi" ON posts FOR INSERT WITH CHECK(auth.uid()=user_id); CREATE POLICY "pod" ON posts FOR DELETE USING(auth.uid()=user_id);
-CREATE POLICY "ls" ON likes FOR SELECT USING(true); CREATE POLICY "li" ON likes FOR INSERT WITH CHECK(auth.uid()=user_id); CREATE POLICY "ld" ON likes FOR DELETE USING(auth.uid()=user_id);
-CREATE POLICY "cs" ON comments FOR SELECT USING(true); CREATE POLICY "ci" ON comments FOR INSERT WITH CHECK(auth.uid()=user_id); CREATE POLICY "cd" ON comments FOR DELETE USING(auth.uid()=user_id);
-CREATE POLICY "fs" ON follows FOR SELECT USING(true); CREATE POLICY "fi" ON follows FOR INSERT WITH CHECK(auth.uid()=follower_id); CREATE POLICY "fd" ON follows FOR DELETE USING(auth.uid()=follower_id);
-CREATE POLICY "cvs" ON conversations FOR SELECT USING(true); CREATE POLICY "cvi" ON conversations FOR INSERT WITH CHECK(true);
-CREATE POLICY "cps" ON conversation_participants FOR SELECT USING(true); CREATE POLICY "cpi" ON conversation_participants FOR INSERT WITH CHECK(true); CREATE POLICY "cpd" ON conversation_participants FOR DELETE USING(true);
-CREATE POLICY "ms" ON messages FOR SELECT USING(true); CREATE POLICY "mi" ON messages FOR INSERT WITH CHECK(auth.uid()=sender_id); CREATE POLICY "mu" ON messages FOR UPDATE USING(true); CREATE POLICY "md" ON messages FOR DELETE USING(auth.uid()=sender_id);
-CREATE POLICY "mrs" ON message_reactions FOR SELECT USING(true); CREATE POLICY "mri" ON message_reactions FOR INSERT WITH CHECK(auth.uid()=user_id); CREATE POLICY "mrd" ON message_reactions FOR DELETE USING(auth.uid()=user_id);
-CREATE POLICY "gs" ON groups FOR SELECT USING(true); CREATE POLICY "gi" ON groups FOR INSERT WITH CHECK(auth.uid()=created_by); CREATE POLICY "gu" ON groups FOR UPDATE USING(true); CREATE POLICY "gd" ON groups FOR DELETE USING(auth.uid()=created_by);
-CREATE POLICY "gms" ON group_members FOR SELECT USING(true); CREATE POLICY "gmi" ON group_members FOR INSERT WITH CHECK(true); CREATE POLICY "gmd" ON group_members FOR DELETE USING(true);
-CREATE POLICY "pls" ON polls FOR SELECT USING(true); CREATE POLICY "pli" ON polls FOR INSERT WITH CHECK(true);
-CREATE POLICY "pos2" ON poll_options FOR SELECT USING(true); CREATE POLICY "poi2" ON poll_options FOR INSERT WITH CHECK(true); CREATE POLICY "pou" ON poll_options FOR UPDATE USING(true);
-CREATE POLICY "pvs" ON poll_votes FOR SELECT USING(true); CREATE POLICY "pvi" ON poll_votes FOR INSERT WITH CHECK(auth.uid()=user_id); CREATE POLICY "pvd" ON poll_votes FOR DELETE USING(auth.uid()=user_id);
-CREATE POLICY "bks" ON bookmarks FOR SELECT USING(true); CREATE POLICY "bki" ON bookmarks FOR INSERT WITH CHECK(auth.uid()=user_id); CREATE POLICY "bkd" ON bookmarks FOR DELETE USING(auth.uid()=user_id);
-CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS TRIGGER AS $$ BEGIN INSERT INTO public.profiles(id,username,full_name) VALUES(NEW.id,COALESCE(NEW.raw_user_meta_data->>'username',split_part(NEW.email,'@',1)),COALESCE(NEW.raw_user_meta_data->>'full_name','')); RETURN NEW; END; $$ LANGUAGE plpgsql SECURITY DEFINER;
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users; CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-INSERT INTO storage.buckets(id,name,public) VALUES('post-images','post-images',true) ON CONFLICT(id) DO NOTHING;
-INSERT INTO storage.buckets(id,name,public) VALUES('avatars','avatars',true) ON CONFLICT(id) DO NOTHING;
-INSERT INTO storage.buckets(id,name,public) VALUES('post-videos','post-videos',true) ON CONFLICT(id) DO NOTHING;
-DROP POLICY IF EXISTS "piu" ON storage.objects; DROP POLICY IF EXISTS "pir" ON storage.objects; DROP POLICY IF EXISTS "pid" ON storage.objects;
-CREATE POLICY "piu" ON storage.objects FOR INSERT WITH CHECK(bucket_id IN ('post-images','avatars','post-videos') AND (storage.foldername(name))[1] = auth.uid()::text);
-CREATE POLICY "pir" ON storage.objects FOR SELECT USING(bucket_id IN ('post-images','avatars','post-videos'));
-CREATE POLICY "pid" ON storage.objects FOR DELETE USING(bucket_id IN ('post-images','avatars','post-videos') AND (storage.foldername(name))[1] = auth.uid()::text);`;
+let sb=null,me=null,myProf=null,myStatus='online',view='feed',viewingUid=null,chatView=null,dmOpen=true,unreadDMs=0,unreadGroups=0,imgFile=null,vidFile=null,inCall=false,callAudioCtx=null,callOsc=null,callGain=null;
 
 // Utils
 function toast(m,t='in'){const b=document.getElementById('toastBox'),e=document.createElement('div');e.className='toast '+t;e.textContent=m;b.appendChild(e);setTimeout(()=>e.remove(),3100)}
@@ -147,10 +100,61 @@ function showModal(title,btns,cc,cb){closeModal();const el=document.createElemen
 function sanitizeSearch(q){if(!q)return'';return q.replace(/[%_]/g,'\\$&')}
 function playSound(f,f2,d){try{const c=new(window.AudioContext||window.webkitAudioContext)(),t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type='sine';o.connect(g);g.connect(c.destination);o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(.08,t);g.gain.exponentialRampToValueAtTime(.001,t+d+.1);o.start(t);o.stop(t+d+.1)}catch(e){}}
 
+// DISCORD-LIKE RINGTONE ENGINE
+function startDiscordRing() {
+    stopDiscordRing();
+    callAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let time = callAudioCtx.currentTime + 0.05;
+    
+    function scheduleRing(startTime) {
+        const osc = callAudioCtx.createOscillator();
+        const gain = callAudioCtx.createGain();
+        osc.type = 'sine';
+        osc.connect(gain);
+        gain.connect(callAudioCtx.destination);
+        
+        // Ring 1
+        osc.frequency.setValueAtTime(440, startTime);
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.15, startTime + 0.01);
+        gain.gain.setValueAtTime(0.15, startTime + 0.15);
+        gain.gain.linearRampToValueAtTime(0, startTime + 0.2);
+        
+        // Pause
+        osc.frequency.setValueAtTime(0, startTime + 0.4);
+        gain.gain.setValueAtTime(0, startTime + 0.4);
+        
+        // Ring 2
+        osc.frequency.setValueAtTime(523.25, startTime + 0.6);
+        gain.gain.linearRampToValueAtTime(0.15, startTime + 0.61);
+        gain.gain.setValueAtTime(0.15, startTime + 0.75);
+        gain.gain.linearRampToValueAtTime(0, startTime + 0.8);
+        
+        osc.start(startTime);
+        osc.stop(startTime + 1.5);
+        return startTime + 2.0; // Total loop time
+    }
+
+    let nextTime = time;
+    function loop() {
+        if (!inCall) return;
+        nextTime = scheduleRing(nextTime);
+        setTimeout(loop, 1800);
+    }
+    loop();
+}
+
+function stopDiscordRing() {
+    if (callAudioCtx) {
+        callAudioCtx.close().catch(()=>{});
+        callAudioCtx = null;
+    }
+}
+
 // Init & Auth
 async function init(){try{sb=window.supabase.createClient(SB_URL,SB_KEY);const{error}=await sb.from('profiles').select('id').limit(1);if(error){renderSetup();return}const{data:{session}}=await sb.auth.getSession();if(session){me=session.user;await ensureProfile(me);await loadProf(me.id);renderApp();setupRT();setUserStatus('online');window.addEventListener('beforeunload',()=>setUserStatus('offline'));return}renderAuth()}catch(e){renderSetup()}}
 async function ensureProfile(user){try{const{data:ex}=await sb.from('profiles').select('id').eq('id',user.id).single();if(ex)return;const un=user.user_metadata?.username||user.email?.split('@')[0]||'user';await sb.from('profiles').upsert({id:user.id,username:un.toLowerCase(),full_name:user.user_metadata?.full_name||''},{onConflict:'id'})}catch(e){}}
-function renderSetup(){document.getElementById('app').innerHTML='<div class="setup-ov"><div class="setup-b"><h1 style="font-size:28px;font-weight:800;margin-bottom:4px;color:var(--acc)">MMJ Social</h1><p style="color:var(--fg2);font-size:13px;margin-bottom:24px">Run SQL in <strong>Supabase SQL Editor</strong>, then refresh.</p><div style="display:flex;gap:8px;margin-bottom:14px"><button class="bp bsm" onclick="navigator.clipboard.writeText(SQL);toast(\'Copied!\',\'ok\')"><i class="fas fa-copy"></i> Copy SQL</button><a href="https://supabase.com/dashboard/project/mxwwwxhtwbfbrloykpef/sql" target="_blank" class="bgc bsm" style="text-decoration:none"><i class="fas fa-external-link-alt"></i> Open Editor</a></div><div class="sql-c">'+SQL.replace(/</g,'&lt;')+'</div><button class="bp" style="width:100%;justify-content:center;margin-top:16px" onclick="location.reload()"><i class="fas fa-refresh"></i> Refresh</button></div></div>'}
+function renderSetup(){document.getElementById('app').innerHTML='<div class="setup-ov"><div class="setup-b"><h1 style="font-size:28px;font-weight:800;margin-bottom:4px;color:var(--acc)">MMJ Social</h1><p style="color:var(--fg2);font-size:13px;margin-bottom:24px">Run SQL in <strong>Supabase SQL Editor</strong>, then refresh.</p><div style="display:flex;gap:8px;margin-bottom:14px"><button class="bp bsm" onclick="navigator.clipboard.writeText(\'RUN SQL FIRST\');toast(\'See instructions!\',\'in\')"><i class="fas fa-copy"></i> Copy SQL</button><a href="https://supabase.com/dashboard/project/mxwwwxhtwbfbrloykpef/sql" target="_blank" class="bgc bsm" style="text-decoration:none"><i class="fas fa-external-link-alt"></i> Open Editor</a></div><button class="bp" style="width:100%;justify-content:center;margin-top:16px" onclick="location.reload()"><i class="fas fa-refresh"></i> Refresh</button></div></div>'}
 let authM='login';
 function renderAuth(){document.getElementById('app').innerHTML='<div class="auth-w"><div class="auth-c"><div style="text-align:center;margin-bottom:28px"><h1 style="font-size:32px;font-weight:800;color:var(--acc)">MMJ Social</h1><p style="color:var(--fg2);font-size:13px;margin-top:4px">Connect. Message. Gather.</p></div><div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:24px"><button class="atab '+(authM==='login'?'on':'')+'" onclick="authM=\'login\';renderAuth()">Sign In</button><button class="atab '+(authM==='signup'?'on':'')+'" onclick="authM=\'signup\';renderAuth()">Sign Up</button></div><form onsubmit="handleAuth(event)">'+(authM==='signup'?'<div style="margin-bottom:12px"><label class="lbl">Username</label><input class="inp" id="aU" placeholder="coolperson42" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+"></div><div style="margin-bottom:12px"><label class="lbl">Display Name</label><input class="inp" id="aN" placeholder="Cool Person" maxlength="50"></div>':'')+'<div style="margin-bottom:12px"><label class="lbl">Email</label><input class="inp" type="email" id="aE" placeholder="you@example.com" required></div><div style="margin-bottom:20px"><label class="lbl">Password</label><input class="inp" type="password" id="aP" placeholder="Min 6 characters" required minlength="6"></div><button class="bp" type="submit" id="aBtn" style="width:100%;justify-content:center">'+(authM==='login'?'<i class="fas fa-arrow-right"></i> Sign In':'<i class="fas fa-user-plus"></i> Create Account')+'</button></form></div></div>'}
 async function handleAuth(e){e.preventDefault();const btn=document.getElementById('aBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';const email=document.getElementById('aE').value.trim(),pass=document.getElementById('aP').value;try{let r;if(authM==='signup'){const un=document.getElementById('aU').value.trim().toLowerCase(),fn=document.getElementById('aN').value.trim();r=await sb.auth.signUp({email,password:pass,options:{data:{username:un,full_name:fn}}});if(r.error)throw r.error;if(r.data.user&&!r.data.session){toast('Check email to confirm, then sign in.','in');authM='login';renderAuth();return}}else{r=await sb.auth.signInWithPassword({email,password:pass});if(r.error)throw r.error}me=r.data.user;await new Promise(r=>setTimeout(r,800));await ensureProfile(me);await loadProf(me.id);toast('Welcome!','ok');renderApp();setupRT();setUserStatus('online')}catch(err){toast(err.message||'Auth failed','er');btn.disabled=false;btn.innerHTML=authM==='login'?'<i class="fas fa-arrow-right"></i> Sign In':'<i class="fas fa-user-plus"></i> Create Account'}}
@@ -166,7 +170,7 @@ function renderNav(){return '<div style="margin-bottom:24px;padding:0 6px"><h1 s
 function renderMainContent(){const m=document.getElementById('mainArea');if(chatView){m.innerHTML='<div id="chatArea" style="width:100%;height:100%;position:relative"></div>';if(chatView.type==='dm')renderDMChat();else renderGroupChat();return}let side='';if(dmOpen&&(view==='feed'||view==='explore'))side='<div class="dm-pane" id="dmSide">'+renderDMPanel()+'</div>';m.innerHTML='<div class="feed-pane" id="feedPane">'+renderFeedContent()+'</div>'+side;if(view==='feed')loadFeed();else if(view==='profile'){if(viewingUid&&viewingUid!==me.id)viewOtherProfile(viewingUid);else loadUserPosts(me.id,true)}else if(view==='explore')loadExplore();else if(view==='bookmarks')loadBookmarks();if(dmOpen)loadDMList()}
 function renderFeedContent(){if(view==='feed')return '<div class="feed-center">'+renderComposer()+'<div id="feedArea"><div style="text-align:center;padding:40px"><span class="spinner" style="width:28px"></span></div></div></div>';if(view==='profile')return '<div class="feed-center" id="profWrap">'+renderProfHeader(myProf,true)+'<div id="feedArea"><div style="text-align:center;padding:40px"><span class="spinner"></span></div></div></div>';if(view==='explore')return '<div class="feed-center"><div id="feedArea"><div style="text-align:center;padding:40px"><span class="spinner"></span></div></div></div>';if(view==='bookmarks')return '<div class="feed-center"><h2 style="font-size:20px;font-weight:800;margin-bottom:16px"><i class="fas fa-bookmark" style="color:var(--acc)"></i> Saved Posts</h2><div id="feedArea"></div></div>';return ''}
 
-// Composer with Media & Polls
+// Composer
 function renderComposer(){return '<div class="comp"><div style="display:flex;gap:10px"><img class="av" src="'+avUrl(myProf)+'" alt=""><textarea id="compT" placeholder="What\'s on your mind?"></textarea></div><div id="mediaPrev"></div><div id="pollPreview"></div><div style="display:flex;align-items:center;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><label class="bi" style="cursor:pointer"><i class="fas fa-image" style="color:var(--grn)"></i><input type="file" accept="image/*" style="display:none" onchange="handleImg(event)"></label><label class="bi" style="cursor:pointer"><i class="fas fa-video" style="color:var(--red)"></i><input type="file" accept="video/*" style="display:none" onchange="handleVid(event)"></label><button class="bi" onclick="togglePollUI()"><i class="fas fa-square-poll-vertical" style="color:var(--blu)"></i></button><div style="flex:1"></div><button class="bp bsm" id="compBtn" onclick="createPost()"><i class="fas fa-paper-plane"></i> Post</button></div></div>'}
 let showPollUI=false;
 function togglePollUI(){showPollUI=!showPollUI;const el=document.getElementById('pollPreview');if(showPollUI){el.innerHTML='<div style="margin-top:8px;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)"><input class="inp" id="pollQ" placeholder="Ask a question..." style="margin-bottom:8px"><div id="pollOpts"><input class="inp" placeholder="Option 1" style="margin-bottom:4px"><input class="inp" placeholder="Option 2"></div><button class="bgc bsm" style="font-size:11px" onclick="addPollOpt()"><i class="fas fa-plus"></i> Add Option</button></div>'}else{el.innerHTML=''}}
@@ -176,7 +180,7 @@ function handleVid(e){const f=e.target.files[0];if(!f)return;if(f.size>50*1024*1
 function renderMediaPrev(){const el=document.getElementById('mediaPrev');if(imgFile)el.innerHTML='<div style="position:relative;border-radius:8px;overflow:hidden;margin-top:8px"><img src="'+URL.createObjectURL(imgFile)+'" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px" alt=""><button onclick="rmMedia()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:11px"><i class="fas fa-xmark"></i></button></div>';else if(vidFile)el.innerHTML='<div style="position:relative;border-radius:8px;overflow:hidden;margin-top:8px;background:#000"><video src="'+URL.createObjectURL(vidFile)+'" style="width:100%;max-height:180px;border-radius:8px" controls muted></video><button onclick="rmMedia()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:11px"><i class="fas fa-xmark"></i></button></div>';else el.innerHTML=''}
 function rmMedia(){imgFile=null;vidFile=null;renderMediaPrev();document.querySelectorAll('input[type=file]').forEach(i=>i.value='')}
 
-// Safe Feed Loading (No Deep Joins that break if null)
+// Safe Feed Loading
 async function loadFeed(){
     const el = document.getElementById('feedArea');
     el.innerHTML = '<div style="text-align:center;padding:40px"><span class="spinner" style="width:28px"></span></div>';
@@ -184,46 +188,17 @@ async function loadFeed(){
         const {data: posts, error} = await sb.from('posts').select('id, user_id, content, image_url, video_url, created_at').order('created_at', {ascending: false}).limit(50);
         if (error) throw error;
         if (!posts?.length) { el.innerHTML = '<div class="empty-s"><i class="fas fa-feather-pointed"></i><p>No posts yet</p></div>'; return; }
-        
         const uids = [...new Set(posts.map(p => p.user_id))];
         const {data: profs} = await sb.from('profiles').select('*').in('id', uids);
         const pids = posts.map(p => p.id);
-        
         let likeMap={}, cmtMap={}, bkMap={}, pollMap={};
-        if(me){
-            const {data: lks} = await sb.from('likes').select('post_id').eq('user_id', me.id).in('post_id', pids);
-            (lks||[]).forEach(l => likeMap[l.post_id] = true);
-            const {data: bks} = await sb.from('bookmarks').select('post_id').eq('user_id', me.id).in('post_id', pids);
-            (bks||[]).forEach(b => bkMap[b.post_id] = true);
-        }
-        const {data: allLks} = await sb.from('likes').select('post_id').in('post_id', pids);
-        let lc={}; (allLks||[]).forEach(l => { lc[l.post_id] = (lc[l.post_id]||0) + 1; });
-        const {data: cmts} = await sb.from('comments').select('post_id').in('post_id', pids);
-        let cc={}; (cmts||[]).forEach(c => { cc[c.post_id] = (cc[c.post_id]||0) + 1; });
-        
+        if(me){const{data: lks} = await sb.from('likes').select('post_id').eq('user_id', me.id).in('post_id', pids);(lks||[]).forEach(l => likeMap[l.post_id] = true);const{data: bks} = await sb.from('bookmarks').select('post_id').eq('user_id', me.id).in('post_id', pids);(bks||[]).forEach(b => bkMap[b.post_id] = true)}
+        const {data: allLks} = await sb.from('likes').select('post_id').in('post_id', pids);let lc={}; (allLks||[]).forEach(l => { lc[l.post_id] = (lc[l.post_id]||0) + 1; });
+        const {data: cmts} = await sb.from('comments').select('post_id').in('post_id', pids);let cc={}; (cmts||[]).forEach(c => { cc[c.post_id] = (cc[c.post_id]||0) + 1; });
         const {data: polls} = await sb.from('polls').select('*').in('post_id', pids);
-        if(polls?.length){
-            const pollIds = polls.map(p=>p.id);
-            const {data: opts} = await sb.from('poll_options').select('*').in('poll_id', pollIds);
-            const optIds = opts.map(o=>o.id);
-            const {data: votes} = await sb.from('poll_votes').select('option_id, user_id').in('option_id', optIds);
-            polls.forEach(poll => {
-                let myVotes = new Set();
-                (votes||[]).filter(v=>v.user_id===me.id).forEach(v=>myVotes.add(v.option_id));
-                poll.options = (opts||[]).filter(o=>o.poll_id===poll.id).map(o=>({...o, voted: myVotes.has(o.id)}));
-                poll.totalVotes = poll.options.reduce((a,o)=>a+o.votes, 0);
-            });
-            polls.forEach(p => pollMap[p.post_id] = p);
-        }
-
+        if(polls?.length){const pollIds = polls.map(p=>p.id);const {data: opts} = await sb.from('poll_options').select('*').in('poll_id', pollIds);const optIds = opts.map(o=>o.id);const {data: votes} = await sb.from('poll_votes').select('option_id, user_id').in('option_id', optIds);polls.forEach(poll => {let myVotes = new Set();(votes||[]).filter(v=>v.user_id===me.id).forEach(v=>myVotes.add(v.option_id));poll.options = (opts||[]).filter(o=>o.poll_id===poll.id).map(o=>({...o, voted: myVotes.has(o.id)}));poll.totalVotes = poll.options.reduce((a,o)=>a+o.votes, 0)});polls.forEach(p => pollMap[p.post_id] = p)}
         const profMap = {}; (profs||[]).forEach(p => profMap[p.id] = p);
-        
-        renderPosts(posts.map(p => ({
-            ...p, profile: profMap[p.user_id] || {username:'user'}, 
-            liked: !!likeMap[p.id], likeCount: lc[p.id]||0, 
-            commentCount: cc[p.id]||0, bookmarked: !!bkMap[p.id], 
-            poll: pollMap[p.id]
-        })));
+        renderPosts(posts.map(p => ({...p, profile: profMap[p.user_id] || {username:'user'}, liked: !!likeMap[p.id], likeCount: lc[p.id]||0, commentCount: cc[p.id]||0, bookmarked: !!bkMap[p.id], poll: pollMap[p.id]})));
     } catch(e) { console.error(e); el.innerHTML = '<div class="empty-s"><i class="fas fa-exclamation-triangle"></i><p>Failed to load feed</p></div>'; }
 }
 
@@ -232,8 +207,7 @@ async function loadUserPosts(uid, isOwn){
     el.innerHTML = '<div style="text-align:center;padding:40px"><span class="spinner"></span></div>';
     try {
         const {data: posts} = await sb.from('posts').select('id, user_id, content, image_url, video_url, created_at').eq('user_id', uid).order('created_at', {ascending: false}).limit(50);
-        const {data: profs} = await sb.from('profiles').select('*').eq('id', uid);
-        const pids = posts.map(p => p.id);
+        const {data: profs} = await sb.from('profiles').select('*').eq('id', uid); const pids = posts.map(p => p.id);
         let likeMap={}, lc={}, cc={}, bkMap={}, pollMap={};
         if(me){const{data:lks}=await sb.from('likes').select('post_id').eq('user_id',me.id).in('post_id',pids);(lks||[]).forEach(l=>likeMap[l.post_id]=true);const{data:bks}=await sb.from('bookmarks').select('post_id').eq('user_id',me.id).in('post_id',pids);(bks||[]).forEach(b=>bkMap[b.post_id]=true)}
         const{data:allLks}=await sb.from('likes').select('post_id').in('post_id',pids);(allLks||[]).forEach(l=>{lc[l.post_id]=(lc[l.post_id]||0)+1});
@@ -251,19 +225,15 @@ function renderPosts(posts){
     if(!posts.length){el.innerHTML='<div class="empty-s"><p>No posts yet</p></div>';return}
     el.innerHTML=posts.map(p=>{
         let pollHtml='';
-        if(p.poll){
-            const poll=p.poll;
-            pollHtml='<div class="poll-box"><p style="font-weight:600;margin-bottom:8px;font-size:13px">'+esc(poll.question)+'</p>'+(poll.options||[]).map(o=>{const pct=poll.totalVotes?Math.round(o.votes/poll.totalVotes*100):0;return '<div class="poll-opt" onclick="votePoll(\''+o.id+'\',\''+poll.id+'\')"><div class="poll-fill" style="width:'+(o.voted?pct:0)+'%;background:'+(o.voted?'var(--acc)':'var(--acc-s)')+'"></div><div class="poll-txt"><span>'+esc(o.text)+(o.voted?' <i class="fas fa-check" style="color:var(--acc);font-size:10px"></i>':'')+'</span><span style="color:var(--fg2);font-size:11px">'+pct+'%</span></div></div>'}).join('')+'<p style="font-size:11px;color:var(--fg2);margin-top:6px">'+poll.totalVotes+' votes</p></div>'
-        }
+        if(p.poll){const poll=p.poll;pollHtml='<div class="poll-box"><p style="font-weight:600;margin-bottom:8px;font-size:13px">'+esc(poll.question)+'</p>'+(poll.options||[]).map(o=>{const pct=poll.totalVotes?Math.round(o.votes/poll.totalVotes*100):0;return '<div class="poll-opt" onclick="votePoll(\''+o.id+'\',\''+poll.id+'\')"><div class="poll-fill" style="width:'+(o.voted?pct:0)+'%;background:'+(o.voted?'var(--acc)':'var(--acc-s)')+'"></div><div class="poll-txt"><span>'+esc(o.text)+(o.voted?' <i class="fas fa-check" style="color:var(--acc);font-size:10px"></i>':'')+'</span><span style="color:var(--fg2);font-size:11px">'+pct+'%</span></div></div>'}).join('')+'<p style="font-size:11px;color:var(--fg2);margin-top:6px">'+poll.totalVotes+' votes</p></div>'}
         let mediaHtml='';
         if(p.image_url)mediaHtml+='<img class="post-img" src="'+p.image_url+'" alt="" onclick="lightbox(\''+p.image_url+'\')" loading="lazy" onerror="this.style.display=\'none\'">';
         if(p.video_url)mediaHtml+='<video class="post-vid" src="'+p.video_url+'" controls preload="metadata" onerror="this.style.display=\'none\'"></video>';
-        
         return '<article class="post"><div style="display:flex;gap:10px"><div style="position:relative"><img class="av" src="'+avUrl(p.profile)+'" alt="" onclick="viewUser(\''+p.user_id+'\')" style="cursor:pointer"><div class="av-status status-'+(p.profile?.status==='invisible'?'offline':p.profile?.status||'offline')+'"></div></div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="un" onclick="viewUser(\''+p.user_id+'\')">'+esc(p.profile?.full_name||p.profile?.username)+'</span><span class="hd">@'+esc(p.profile?.username)+'</span><span class="ts"> · '+timeAgo(p.created_at)+'</span>'+(me&&me.id===p.user_id?'<button class="bi" style="margin-left:auto;font-size:12px" onclick="delPost(\''+p.id+'\')"><i class="fas fa-trash-can"></i></button>':'')+'</div><div class="pb">'+esc(p.content)+'</div>'+mediaHtml+pollHtml+'<div class="pa"><button class="ab '+(p.liked?'lk':'')+'" onclick="toggleLike(\''+p.id+'\',this)"><i class="fas fa-heart"></i> <span>'+(p.likeCount||'')+'</span></button><button class="ab" onclick="toggleCmt(\''+p.id+'\')"><i class="fas fa-comment"></i> <span>'+(p.commentCount||'')+'</span></button><button class="ab '+(p.bookmarked?'lk':'')+'" onclick="toggleBookmark(\''+p.id+'\',this)"><i class="fas fa-bookmark"></i></button><button class="ab" onclick="sharePost(\''+p.id+'\')"><i class="fas fa-share-from-square"></i></button></div><div class="cmt-sec" id="cmt-'+p.id+'" style="display:none"></div></div></div></article>'
     }).join('');
 }
 
-async function votePoll(oid,pid){if(!me)return;try{const{data:ex}=await sb.from('poll_votes').select('option_id,poll_options(poll_id)').eq('user_id',me.id).eq('option_id',oid).single();if(ex){await sb.from('poll_votes').delete().eq('user_id',me.id).eq('option_id',oid)}else{const{data:myVotes}=await sb.from('poll_votes').select('option_id,poll_options(poll_id)').eq('user_id',me.id);const samePoll=(myVotes||[]).filter(v=>v.poll_options?.poll_id===pid);if(samePoll.length)await sb.from('poll_votes').delete().in('option_id',samePoll.map(v=>v.option_id));await sb.from('poll_votes').insert({user_id:me.id,option_id:oid});await sb.from('poll_options').update({votes:ex?0:1}).eq('id',oid)}if(view==='feed')loadFeed();else loadUserPosts(viewingUid||me.id)}catch(e){toast('Failed to vote','er')}}
+async function votePoll(oid,pid){if(!me)return;try{const{data:ex}=await sb.from('poll_votes').select('option_id,poll_options(poll_id)').eq('user_id',me.id).eq('option_id',oid).single();if(ex){await sb.from('poll_votes').delete().eq('user_id',me.id).eq('option_id',oid)}else{const{data:myVotes}=await sb.from('poll_votes').select('option_id,poll_options(poll_id)').eq('user_id',me.id);const samePoll=(myVotes||[]).filter(v=>v.poll_options?.poll_id===pid);if(samePoll.length)await sb.from('poll_votes').delete().in('option_id',samePoll.map(v=>v.option_id));await sb.from('poll_votes').insert({user_id:me.id,option_id:oid});await sb.from('poll_options').update({votes:ex?0:1}).eq('id',oid)}if(view==='feed')loadFeed();else loadUserPosts(viewingUid||me.id)}catch(e){toast('Failed','er')}}
 async function toggleBookmark(pid,btn){if(!me)return;try{const{data:ex}=await sb.from('bookmarks').select('post_id').eq('user_id',me.id).eq('post_id',pid).single();if(ex){await sb.from('bookmarks').delete().eq('user_id',me.id).eq('post_id',pid);btn.classList.remove('lk');toast('Unsaved','in')}else{await sb.from('bookmarks').insert({user_id:me.id,post_id:pid});btn.classList.add('lk');toast('Saved!','ok')}}catch(e){}}
 async function viewBookmarks(){chatView=null;view='bookmarks';renderApp();try{const{data:bks}=await sb.from('bookmarks').select('post_id').eq('user_id',me.id);if(!bks?.length){document.getElementById('feedArea').innerHTML='<div class="empty-s"><i class="fas fa-bookmark"></i><p>No saved posts yet</p></div>';return}const pids=bks.map(b=>b.post_id);const{data:posts}=await sb.from('posts').select('id, user_id, content, image_url, video_url, created_at').in('id',pids).order('created_at',{ascending:false});const uids=[...new Set(posts.map(p=>p.user_id))];const{data:profs}=await sb.from('profiles').select('*').in('id',uids);const profMap={};(profs||[]).forEach(p=>profMap[p.id]=p);renderPosts(posts.map(p=>({...p,profile:profMap[p.user_id]||{username:'user'},bookmarked:true})))}catch(e){}}
 
@@ -293,10 +263,35 @@ function searchDMUsers(q){if(!q.trim())return loadDMList();const sq=sanitizeSear
 async function newDMModal(){showModal('New Message',[{t:'Cancel',cls:'bgc bsm',fn:()=>{}}],true,'<div><label class="lbl">Username</label><input class="inp" id="newDmInp" placeholder="username"></div>');document.querySelector('[data-mi="0"]').onclick=async()=>{const v=document.getElementById('newDmInp')?.value.trim();if(!v)return;closeModal();const{data:u}=await sb.from('profiles').select('*').ilike('username',v).neq('id',me.id).limit(1);if(!u?.length){toast('User not found','er');return}startDMWith(u[0].id)}}
 async function startDMWith(uid){if(uid===me.id){toast('Cannot message yourself','er');return}try{const{data:mc}=await sb.from('conversation_participants').select('conversation_id').eq('user_id',me.id);const{data:tc}=await sb.from('conversation_participants').select('conversation_id').eq('user_id',uid);const mids=(mc||[]).map(c=>c.conversation_id),tids=(tc||[]).map(c=>c.conversation_id);const ex=mids.find(c=>tids.includes(c));if(ex){openDM(ex,uid);return}const{data:conv}=await sb.from('conversations').insert({}).select().single();await sb.from('conversation_participants').insert([{conversation_id:conv.id,user_id:me.id},{conversation_id:conv.id,user_id:uid}]);openDM(conv.id,uid);toast('Conversation started','ok')}catch(e){toast('Failed','er')}}
 async function openDM(cid,peerId){chatView={type:'dm',convId:cid,peerId};unreadDMs=0;renderNav();const area=document.getElementById('dmChatArea');if(area){area.innerHTML='<div style="text-align:center;padding:40px"><span class="spinner"></span></div>';loadDMChat(area,cid,peerId)}else{renderDMFull();setTimeout(()=>{const a=document.getElementById('dmChatArea');if(a)loadDMChat(a,cid,peerId)},50)}loadDMList()}
-async function loadDMChat(area,cid,peerId){const peer=await getProf(peerId);area.innerHTML='<div class="chat-header"><button class="bi" onclick="chatView={type:\'dm\'};renderDMFull()"><i class="fas fa-arrow-left"></i></button><div style="position:relative"><img class="av" src="'+avUrl(peer)+'" alt=""><div class="av-status status-'+(peer.status==='invisible'?'offline':peer.status||'offline')+'"></div></div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+esc(peer.full_name||peer.username)+'</div><div class="hd" style="font-size:10px">@'+esc(peer.username)+'</div></div><button class="bi" onclick="startCall()"><i class="fas fa-phone"></i></button><button class="bi" onclick="startCall(true)"><i class="fas fa-video"></i></button></div><div class="chat-messages" id="chatMsgs"></div><div class="chat-input-bar"><input class="inp" id="chatInp" placeholder="Type a message..." onkeydown="if(event.key===\'Enter\')sendDM()"><button class="bp bsm" onclick="sendDM()" style="padding:8px 14px"><i class="fas fa-paper-plane"></i></button></div>';loadMessages();document.getElementById('chatInp')?.focus()}
-async function sendDM(){if(!chatView)return;const inp=document.getElementById('chatInp');if(!inp||!inp.value.trim())return;await sb.from('messages').insert({conversation_id:chatView.convId,sender_id:me.id,content:inp.value.trim()});inp.value='';playSound(880,520,.08);loadMessages()}
-function startCall(isVideo=false){if(inCall)return;inCall=true;const area=document.getElementById('chatArea');const el=document.createElement('div');el.className='call-ui';el.id='callUI';el.innerHTML='<img src="'+defAv('U')+'" style="width:100px;height:100px;border-radius:50%;border:4px solid rgba(255,255,255,.2);position:absolute"><p style="font-size:18px;font-weight:700;margin-top:90px;color:#fff">Calling...</p><p style="color:rgba(255,255,255,.6);font-size:13px">'+(isVideo?'Video':'Voice')+' Call</p><div class="call-actions"><button class="call-btn call-mute"><i class="fas fa-microphone"></i></button>'+(isVideo?'<button class="call-btn call-mute"><i class="fas fa-video"></i></button>':'')+'<button class="call-btn call-end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button></div><p style="position:absolute;bottom:30px;color:rgba(255,255,255,.4);font-size:11px">Requires WebRTC signaling server for real calls</p>';area.appendChild(el);playSound(440,440,.5)}
-function endCall(){document.getElementById('callUI')?.remove();inCall=false;toast('Call ended','in')}
+async function loadDMChat(area,cid,peerId){const peer=await getProf(peerId);area.innerHTML='<div class="chat-header"><button class="bi" onclick="chatView={type:\'dm\'};renderDMFull()"><i class="fas fa-arrow-left"></i></button><div style="position:relative"><img class="av" src="'+avUrl(peer)+'" alt=""><div class="av-status status-'+(peer.status==='invisible'?'offline':peer.status||'offline')+'"></div></div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+esc(peer.full_name||peer.username)+'</div><div class="hd" style="font-size:10px">@'+esc(peer.username)+'</div></div><button class="bi" onclick="startCall(false)"><i class="fas fa-phone"></i></button><button class="bi" onclick="startCall(true)"><i class="fas fa-video"></i></button></div><div class="chat-messages" id="chatMsgs"></div><div class="chat-input-bar"><input class="inp" id="chatInp" placeholder="Type a message..." onkeydown="if(event.key===\'Enter\')sendMsg()"><button class="bp bsm" onclick="sendMsg()" style="padding:8px 14px"><i class="fas fa-paper-plane"></i></button></div>';loadMessages();document.getElementById('chatInp')?.focus()}
+
+// UNIFIED SEND MESSAGE (FIX FOR DMs & GROUPS)
+async function sendMsg(){
+    if(!chatView)return;
+    const inp=document.getElementById('chatInp');
+    if(!inp||!inp.value.trim())return;
+    const cid = chatView.type==='dm' ? chatView.convId : chatView.groupId;
+    const text = inp.value.trim();
+    inp.value = ''; // Clear immediately for snappy UI
+    
+    try {
+        const {error} = await sb.from('messages').insert({
+            conversation_id: cid,
+            sender_id: me.id,
+            content: text
+        });
+        if(error) throw error;
+        playSound(880,520,.08);
+        loadMessages(); // Refresh chat
+    } catch(e) {
+        toast('Failed to send: ' + e.message, 'er');
+        inp.value = text; // Put text back on failure
+    }
+}
+
+// CALLS (DISCORD RINGTONE)
+function startCall(isVideo=false){if(inCall)return;inCall=true;startDiscordRing();const area=document.getElementById('chatArea');const el=document.createElement('div');el.className='call-ui';el.id='callUI';el.innerHTML='<img src="'+defAv('U')+'" style="width:100px;height:100px;border-radius:50%;border:4px solid rgba(255,255,255,.2);position:absolute"><p style="font-size:18px;font-weight:700;margin-top:90px;color:#fff">Calling...</p><p style="color:rgba(255,255,255,.6);font-size:13px">'+(isVideo?'Video':'Voice')+' Call</p><div class="call-actions"><button class="call-btn call-mute"><i class="fas fa-microphone"></i></button>'+(isVideo?'<button class="call-btn call-mute"><i class="fas fa-video"></i></button>':'')+'<button class="call-btn call-end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button></div>';area.appendChild(el)}
+function endCall(){stopDiscordRing();document.getElementById('callUI')?.remove();inCall=false;toast('Call ended','in')}
 
 // Messages, Reactions, Pins
 async function loadMessages(){if(!chatView)return;const cid=chatView.type==='dm'?chatView.convId:chatView.groupId;try{const{data:msgs}=await sb.from('messages').select('*,sender:profiles!sender_id(username,full_name,avatar_url),message_reactions(emoji, user_id)').eq('conversation_id',cid).order('created_at',{ascending:true}).limit(100);const el=document.getElementById('chatMsgs');if(!el)return;if(!msgs?.length){el.innerHTML='<div class="empty-s" style="padding:20px"><p style="font-size:12px">No messages yet. Say hello!</p></div>';return}let html='',lastDate='';const pinned=msgs.filter(m=>m.is_pinned);if(pinned.length&&chatView.type==='group')html+='<div class="pinned-bar" onclick="showPinned(\''+cid+'\')"><i class="fas fa-thumbtack"></i> '+pinned.length+' Pinned Message'+(pinned.length>1?'s':'')+'</div>';msgs.forEach(m=>{const d=new Date(m.created_at).toLocaleDateString();if(d!==lastDate){lastDate=d;html+='<div class="msg-date-divider"><span>'+(d===new Date().toLocaleDateString()?'Today':d)+'</span></div>'}const isMe=m.sender_id===me.id;const reactions={};(m.message_reactions||[]).forEach(r=>{if(!reactions[r.emoji])reactions[r.emoji]={count:0,active:false};reactions[r.emoji].count++;if(r.user_id===me.id)reactions[r.emoji].active=true});const reactHtml=Object.keys(reactions).length?'<div class="msg-reactions">'+Object.entries(reactions).map(([e,d])=>'<span class="reaction-pill '+(d.active?'active':'')+'" onclick="toggleReaction(\''+m.id+'\',\''+e+'\')">'+e+' '+d.count+'</span>').join('')+'</div>':'';html+='<div class="msg-wrap '+(isMe?'self':'')+'"><div class="msg-bubble '+(isMe?'msg-self':'msg-other')+'"><div class="msg-actions"><button class="msg-act" onclick="showReactMenu(event,\''+m.id+'\')"><i class="fas fa-face-smile"></i></button>'+(chatView.type==='group'?'<button class="msg-act" onclick="pinMsg(\''+m.id+'\')"><i class="fas fa-thumbtack"></i></button>':'')+'</div><div style="font-size:11px;font-weight:600;color:var(--acc);margin-bottom:2px">'+(isMe?'You':esc(m.sender?.username||'user'))+'</div><div>'+esc(m.content)+'</div><div class="msg-meta">'+timeAgo(m.created_at)+(m.is_pinned?' <i class="fas fa-thumbtack" style="font-size:9px;color:var(--acc)"></i>':'')+'</div>'+reactHtml+'</div></div>'});el.innerHTML=html;el.scrollTop=el.scrollHeight}catch(e){}}
@@ -311,8 +306,7 @@ function renderGroupsFull(){document.getElementById('mainArea').innerHTML='<div 
 async function loadGroupList(){const{data:mems}=await sb.from('group_members').select('group_id,role,groups(id,name,description,created_at)').eq('user_id',me.id);const el=document.getElementById('grpList');if(!el)return;if(!mems?.length){el.innerHTML='<div class="empty-s" style="padding:20px"><p style="font-size:12px">No groups yet</p></div>';return}el.innerHTML=mems.sort((a,b)=>new Date(b.groups?.created_at||0)-new Date(a.groups?.created_at||0)).map(m=>'<div class="dm-item '+(chatView?.groupId===m.group_id?'on':'')+'" onclick="openGroup(\''+m.group_id+'\')"><div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,rgba(232,160,53,.2),rgba(167,123,223,.2));display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-users" style="font-size:13px;color:var(--acc)"></i></div><div style="min-width:0;flex:1"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(m.groups?.name)+'</div><div class="hd" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(esc(m.groups?.description)||'No description')+'</div></div>'+(m.role==='admin'?'<span class="role-admin" style="font-size:9px">Admin</span>':'')+'</div>').join('')}
 async function createGroupModal(){showModal('Create Group',[{t:'Cancel',cls:'bgc bsm',fn:()=>{}},{t:'Create',cls:'bp bsm',fn:()=>{}}],true,'<div style="margin-bottom:14px"><label class="lbl">Group Name</label><input class="inp" id="newGrpName" placeholder="My Group" maxlength="40"></div><div><label class="lbl">Description</label><input class="inp" id="newGrpDesc" placeholder="About this group" maxlength="100"></div>');document.querySelector('[data-mi="1"]').onclick=async()=>{const n=document.getElementById('newGrpName')?.value.trim();if(!n){toast('Name required','er');return}const d=document.getElementById('newGrpDesc')?.value.trim()||'';const{data:g}=await sb.from('groups').insert({name:n,description:d,created_by:me.id}).select().single();await sb.from('group_members').insert({group_id:g.id,user_id:me.id,role:'admin'});await sb.from('conversations').upsert({id:g.id},{onConflict:'id'});closeModal();toast('Group created!','ok');loadGroupList();openGroup(g.id)}}
 async function openGroup(gid){chatView={type:'group',groupId:gid};unreadGroups=0;renderNav();await sb.from('conversations').upsert({id:gid},{onConflict:'id'});const area=document.getElementById('grpChatArea');if(area){area.innerHTML='<div style="text-align:center;padding:40px"><span class="spinner"></span></div>';loadGroupChat(area,gid)}else{renderGroupsFull();setTimeout(()=>{const a=document.getElementById('grpChatArea');if(a)loadGroupChat(a,gid)},50)}loadGroupList()}
-async function loadGroupChat(area,gid){const{data:grp}=await sb.from('groups').select('*').eq('id',gid).single();const{data:mems}=await sb.from('group_members').select('user_id,role,mem:profiles!user_id(username,full_name,avatar_url)').eq('group_id',gid);const isAdmin=mems?.some(m=>m.user_id===me.id&&m.role==='admin');area.innerHTML='<div class="chat-header"><button class="bi" onclick="chatView={type:\'group\'};renderGroupsFull()"><i class="fas fa-arrow-left"></i></button><div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,rgba(232,160,53,.2),rgba(167,123,223,.2));display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-users" style="font-size:13px;color:var(--acc)"></i></div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(grp?.name)+'</div><div class="hd" style="font-size:10px">'+(mems?.length||0)+' members</div></div><button class="bi" onclick="startCall()"><i class="fas fa-phone"></i></button><button class="bi" onclick="showGroupInfo(\''+gid+'\')"><i class="fas fa-circle-info"></i></button>'+(isAdmin?'<button class="bi" onclick="showAddMember(\''+gid+'\')"><i class="fas fa-user-plus"></i></button>':'')+'</div><div class="chat-messages" id="chatMsgs"></div><div class="chat-input-bar"><input class="inp" id="chatInp" placeholder="Message the group..." onkeydown="if(event.key===\'Enter\')sendGroupMsg()"><button class="bp bsm" onclick="sendGroupMsg()" style="padding:8px 14px"><i class="fas fa-paper-plane"></i></button></div>';loadMessages();document.getElementById('chatInp')?.focus()}
-async function sendGroupMsg(){if(!chatView||chatView.type!=='group')return;const inp=document.getElementById('chatInp');if(!inp||!inp.value.trim())return;await sb.from('messages').insert({conversation_id:chatView.groupId,sender_id:me.id,content:inp.value.trim()});inp.value='';playSound(880,520,.08);loadMessages()}
+async function loadGroupChat(area,gid){const{data:grp}=await sb.from('groups').select('*').eq('id',gid).single();const{data:mems}=await sb.from('group_members').select('user_id,role,mem:profiles!user_id(username,full_name,avatar_url)').eq('group_id',gid);const isAdmin=mems?.some(m=>m.user_id===me.id&&m.role==='admin');area.innerHTML='<div class="chat-header"><button class="bi" onclick="chatView={type:\'group\'};renderGroupsFull()"><i class="fas fa-arrow-left"></i></button><div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,rgba(232,160,53,.2),rgba(167,123,223,.2));display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-users" style="font-size:13px;color:var(--acc)"></i></div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(grp?.name)+'</div><div class="hd" style="font-size:10px">'+(mems?.length||0)+' members</div></div><button class="bi" onclick="startCall(false)"><i class="fas fa-phone"></i></button><button class="bi" onclick="showGroupInfo(\''+gid+'\')"><i class="fas fa-circle-info"></i></button>'+(isAdmin?'<button class="bi" onclick="showAddMember(\''+gid+'\')"><i class="fas fa-user-plus"></i></button>':'')+'</div><div class="chat-messages" id="chatMsgs"></div><div class="chat-input-bar"><input class="inp" id="chatInp" placeholder="Message the group..." onkeydown="if(event.key===\'Enter\')sendMsg()"><button class="bp bsm" onclick="sendMsg()" style="padding:8px 14px"><i class="fas fa-paper-plane"></i></button></div>';loadMessages();document.getElementById('chatInp')?.focus()}
 async function showGroupInfo(gid){const{data:grp}=await sb.from('groups').select('*').eq('id',gid).single();const{data:mems}=await sb.from('group_members').select('user_id,role,mem:profiles!user_id(username,full_name,avatar_url)').eq('group_id',gid);const isAdmin=mems?.some(m=>m.user_id===me.id&&m.role==='admin'),isCreator=grp?.created_by===me.id;const ml=(mems||[]).map(m=>'<div class="grp-member"><img class="av av-s" src="'+avUrl(m.mem)+'" alt=""><div style="flex:1"><span class="un" style="font-size:12px" onclick="closeModal();viewUser(\''+m.user_id+'\')">'+esc(m.mem?.full_name||m.mem?.username)+'</span><span class="hd" style="font-size:10px"> @'+esc(m.mem?.username)+'</span></div><span class="'+(m.role==='admin'?'role-admin':'role-member')+'">'+m.role+'</span>'+(isAdmin&&m.user_id!==me.id?'<button class="bi" style="font-size:11px;color:var(--red)" onclick="removeFromGroup(\''+gid+'\',\''+m.user_id+'\')"><i class="fas fa-xmark"></i></button>':'')+'</div>').join('');const btns=[{t:'Close',cls:'bgc bsm',fn:()=>{}}];if(isCreator)btns.push({t:'Delete Group',cls:'bp bsm',st:'background:var(--red);color:#fff',fn:async()=>{await sb.from('groups').delete().eq('id',gid);closeModal();chatView={type:'group'};renderGroupsFull();toast('Deleted','ok')}});else if(isAdmin)btns.push({t:'Leave',cls:'bgc bsm',st:'border-color:var(--red);color:var(--red)',fn:async()=>{await sb.from('group_members').delete().eq('group_id',gid).eq('user_id',me.id);closeModal();chatView={type:'group'};renderGroupsFull()}});showModal(grp?.name||'Group',btns,true,'<p style="color:var(--fg2);font-size:12px;margin-bottom:12px">'+(esc(grp?.description)||'No description')+'</p><div style="max-height:240px;overflow-y:auto;border-top:1px solid var(--border);padding-top:8px">'+ml+'</div>')}
 async function showAddMember(gid){showModal('Add Member',[{t:'Cancel',cls:'bgc bsm',fn:()=>{}}],true,'<div><label class="lbl">Username</label><input class="inp" id="addMemInp" placeholder="username"></div>');document.querySelector('[data-mi="0"]').onclick=async()=>{const un=document.getElementById('addMemInp')?.value.trim();if(!un)return;const{data:u}=await sb.from('profiles').select('*').ilike('username',un).limit(1);if(!u?.length){toast('Not found','er');return}if(u[0].id===me.id)return;const{data:ex}=await sb.from('group_members').select('user_id').eq('group_id',gid).eq('user_id',u[0].id).single();if(ex){toast('Already in group','er');return}await sb.from('group_members').insert({group_id:gid,user_id:u[0].id,role:'member'});closeModal();toast(u[0].username+' added!','ok');const a=document.getElementById('grpChatArea');if(a)loadGroupChat(a,gid)}}
 async function removeFromGroup(gid,uid){await sb.from('group_members').delete().eq('group_id',gid).eq('user_id',uid);toast('Removed','ok');closeModal();const a=document.getElementById('grpChatArea');if(a)loadGroupChat(a,gid)}
