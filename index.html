@@ -310,7 +310,79 @@ async function loadGroupChat(area,gid){const{data:grp}=await sb.from('groups').s
 async function showGroupInfo(gid){const{data:grp}=await sb.from('groups').select('*').eq('id',gid).single();const{data:mems}=await sb.from('group_members').select('user_id,role,mem:profiles!user_id(username,full_name,avatar_url)').eq('group_id',gid);const isAdmin=mems?.some(m=>m.user_id===me.id&&m.role==='admin'),isCreator=grp?.created_by===me.id;const ml=(mems||[]).map(m=>'<div class="grp-member"><img class="av av-s" src="'+avUrl(m.mem)+'" alt=""><div style="flex:1"><span class="un" style="font-size:12px" onclick="closeModal();viewUser(\''+m.user_id+'\')">'+esc(m.mem?.full_name||m.mem?.username)+'</span><span class="hd" style="font-size:10px"> @'+esc(m.mem?.username)+'</span></div><span class="'+(m.role==='admin'?'role-admin':'role-member')+'">'+m.role+'</span>'+(isAdmin&&m.user_id!==me.id?'<button class="bi" style="font-size:11px;color:var(--red)" onclick="removeFromGroup(\''+gid+'\',\''+m.user_id+'\')"><i class="fas fa-xmark"></i></button>':'')+'</div>').join('');const btns=[{t:'Close',cls:'bgc bsm',fn:()=>{}}];if(isCreator)btns.push({t:'Delete Group',cls:'bp bsm',st:'background:var(--red);color:#fff',fn:async()=>{await sb.from('groups').delete().eq('id',gid);closeModal();chatView={type:'group'};renderGroupsFull();toast('Deleted','ok')}});else if(isAdmin)btns.push({t:'Leave',cls:'bgc bsm',st:'border-color:var(--red);color:var(--red)',fn:async()=>{await sb.from('group_members').delete().eq('group_id',gid).eq('user_id',me.id);closeModal();chatView={type:'group'};renderGroupsFull()}});showModal(grp?.name||'Group',btns,true,'<p style="color:var(--fg2);font-size:12px;margin-bottom:12px">'+(esc(grp?.description)||'No description')+'</p><div style="max-height:240px;overflow-y:auto;border-top:1px solid var(--border);padding-top:8px">'+ml+'</div>')}
 async function showAddMember(gid){showModal('Add Member',[{t:'Cancel',cls:'bgc bsm',fn:()=>{}}],true,'<div><label class="lbl">Username</label><input class="inp" id="addMemInp" placeholder="username"></div>');document.querySelector('[data-mi="0"]').onclick=async()=>{const un=document.getElementById('addMemInp')?.value.trim();if(!un)return;const{data:u}=await sb.from('profiles').select('*').ilike('username',un).limit(1);if(!u?.length){toast('Not found','er');return}if(u[0].id===me.id)return;const{data:ex}=await sb.from('group_members').select('user_id').eq('group_id',gid).eq('user_id',u[0].id).single();if(ex){toast('Already in group','er');return}await sb.from('group_members').insert({group_id:gid,user_id:u[0].id,role:'member'});closeModal();toast(u[0].username+' added!','ok');const a=document.getElementById('grpChatArea');if(a)loadGroupChat(a,gid)}}
 async function removeFromGroup(gid,uid){await sb.from('group_members').delete().eq('group_id',gid).eq('user_id',uid);toast('Removed','ok');closeModal();const a=document.getElementById('grpChatArea');if(a)loadGroupChat(a,gid)}
-
+async function showAddMember(gid){
+    showModal('Add Member',[
+        {t:'Cancel', cls:'bgc bsm', fn:()=>{ closeModal(); }},
+        {t:'Add Member', cls:'bp bsm', fn:()=>{}}
+    ], true, 
+    '<div style="margin-bottom:12px"><label class="lbl">Username</label><input class="inp" id="addMemInp" placeholder="Enter username..." onkeydown="if(event.key===\'Enter\')document.querySelector(\'[data-mi=\\\'1\\\']\').click()"></div><p style="font-size:11px;color:var(--fg2)">Search by username to add a member</p>'
+    );
+    
+    // Assign handler to the "Add Member" button (index 1)
+    document.querySelector('[data-mi="1"]').onclick = async() => {
+        const un = document.getElementById('addMemInp')?.value.trim().toLowerCase();
+        if(!un) {
+            toast('Please enter a username', 'er');
+            return;
+        }
+        
+        try {
+            // Use proper ilike with wildcards for partial matching
+            const {data: u, error: searchErr} = await sb.from('profiles')
+                .select('*')
+                .ilike('username', '%' + un + '%')
+                .neq('id', me.id)
+                .limit(5);
+            
+            if(searchErr) throw searchErr;
+            
+            if(!u || u.length === 0) {
+                toast('User not found', 'er');
+                return;
+            }
+            
+            // If multiple matches, try exact match first
+            let targetUser = u.find(user => user.username.toLowerCase() === un) || u[0];
+            
+            if(targetUser.id === me.id) {
+                toast('Cannot add yourself', 'er');
+                return;
+            }
+            
+            // Check if already in group
+            const {data: ex, error: checkErr} = await sb.from('group_members')
+                .select('user_id')
+                .eq('group_id', gid)
+                .eq('user_id', targetUser.id)
+                .maybeSingle();
+            
+            if(checkErr) throw checkErr;
+            
+            if(ex) {
+                toast(targetUser.username + ' is already in the group', 'er');
+                return;
+            }
+            
+            // Add to group
+            const {error: insertErr} = await sb.from('group_members')
+                .insert({group_id: gid, user_id: targetUser.id, role: 'member'});
+            
+            if(insertErr) throw insertErr;
+            
+            closeModal();
+            toast(targetUser.username + ' added to group!', 'ok');
+            
+            // Refresh the group chat
+            const a = document.getElementById('grpChatArea');
+            if(a) await loadGroupChat(a, gid);
+            loadGroupList();
+            
+        } catch(e) {
+            console.error('Add member error:', e);
+            toast('Failed to add member: ' + (e.message || 'Unknown error'), 'er');
+        }
+    };
+}
 // Explore
 async function loadExplore(){const el=document.getElementById('feedArea');if(!el)return;el.innerHTML='<div style="margin-bottom:18px"><h2 style="font-size:20px;font-weight:800;margin-bottom:12px">Explore</h2><input class="inp" placeholder="Search users..." id="exploreInp" oninput="doExplore(this.value)" style="padding:12px 16px;font-size:14px"></div><div id="exploreResults"></div>';const{data:users}=await sb.from('profiles').select('*').neq('id',me.id).order('created_at',{ascending:false}).limit(8);if(users?.length)document.getElementById('exploreResults').innerHTML='<h3 style="font-size:14px;font-weight:600;color:var(--fg2);margin-bottom:12px">Suggested</h3>'+users.map(u=>'<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer" onclick="viewUser(\''+u.id+'\')"><div style="position:relative"><img class="av" src="'+avUrl(u)+'" alt=""><div class="av-status status-'+(u.status==='invisible'?'offline':u.status||'offline')+'" style="width:10px;height:10px;bottom:0;right:0"></div></div><div style="flex:1;min-width:0"><div class="un">'+esc(u.full_name||u.username)+'</div><div class="hd">@'+esc(u.username)+'</div>'+(u.bio?'<p style="font-size:11px;color:var(--fg2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(u.bio)+'</p>':'')+'</div><button class="fbtn nf" onclick="event.stopPropagation();toggleFollow(\''+u.id+'\')">Follow</button></div>').join('')}
 async function doExplore(q){if(!q.trim()){loadExplore();return}const sq=sanitizeSearch(q);const{data:users}=await sb.from('profiles').select('*').or('username.ilike.%'+sq+'%,full_name.ilike.%'+sq+'%').neq('id',me.id).limit(20);const el=document.getElementById('exploreResults');if(!el)return;if(!users?.length){el.innerHTML='<div class="empty-s"><p>No users found</p></div>';return}el.innerHTML=users.map(u=>'<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer" onclick="viewUser(\''+u.id+'\')"><img class="av" src="'+avUrl(u)+'" alt=""><div style="flex:1;min-width:0"><div class="un">'+esc(u.full_name||u.username)+'</div><div class="hd">@'+esc(u.username)+'</div></div><button class="fbtn nf" onclick="event.stopPropagation();toggleFollow(\''+u.id+'\')">Follow</button></div>').join('')}
